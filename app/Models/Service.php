@@ -10,17 +10,29 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name_ar',
-        'name_en',
-        'slug',
-        'short_description',
-        'description',
-        'price_text',
-        'sort_order',
-        'icon_path',
-        // 'is_active',
-    ];
+protected $fillable = [
+    'name_ar',
+    'name_en',
+    'slug',
+    // 'short_description_ar',
+    // 'short_description_en',
+    'description_ar',
+    'description_en',
+    'price_text',
+    'sort_order',
+    'category',
+    'icon_path',
+];
+
+
+protected $appends = ['icon_url'];
+
+public function getIconUrlAttribute()
+{
+    return $this->icon_path ? asset('storage/' . $this->icon_path) : null;
+}
+
+
 
     protected static function booted()
     {

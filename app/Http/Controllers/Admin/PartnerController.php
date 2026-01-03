@@ -5,68 +5,68 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PartnerController extends Controller
 {
-    /**
-     * API لإضافة شراكة جديدة
-     * POST /api/admin/partners
-     */
+    /* =========================================================
+     |  ADMIN – Dashboard
+     ========================================================= */
 
-
+    /** List ALL partners (dashboard) */
     public function index()
-{
-    // نجيب كل الشركاء مرتبين
-    $partners = Partner::orderBy('sort_order')
-        ->orderBy('id')
-        ->get();
+    {
+        $partners = Partner::orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
 
-    // نضيف logo_url جاهز لكل واحد
-    foreach ($partners as $partner) {
-        $partner->logo_url = $partner->logo_path
-            ? asset('storage/' . $partner->logo_path)
-            : null;
+        return response()->json([
+            'success' => true,
+            'message' => 'Partners fetched successfully.',
+            'data'    => ['partners' => $partners],
+            'errors'  => null,
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Partners fetched successfully.',
-        'data'    => [
-            'partners' => $partners,
-        ],
-        'errors'  => null,
-    ]);
-}
+    /** Show single partner by ID (dashboard) */
+    public function show($id)
+    {
+        $partner = Partner::find($id);
 
+        if (! $partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found.',
+                'data'    => null,
+                'errors'  => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner fetched successfully.',
+            'data'    => $partner,
+            'errors'  => null,
+        ]);
+    }
+
+    /** Create partner (dashboard) */
     public function store(Request $request)
     {
-        // 1) Validation
         $validated = $request->validate([
             'name'        => ['required', 'string', 'max:255'],
             'website_url' => ['nullable', 'url', 'max:255'],
             'sort_order'  => ['nullable', 'integer', 'min:0'],
-            'logo'        => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'is_active'   => ['nullable', 'boolean'],
+            'logo'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg'],
         ]);
 
-        // 2) رفع الصورة (لو موجودة)
-        $logoPath = null;
-        if ($request->hasFile('logo')) {
-            // التخزين في storage/app/public/partners
-            $logoPath = $request->file('logo')->store('partners', 'public');
-        }
+       if ($request->hasFile('logo')) {
+    $path = $request->file('logo')->store('partners', 'public'); // partners/xxx.png
+    $validated['logo_path'] = basename($path);                   // xxx.png فقط
+}
 
-        // 3) إنشاء الريكورد في الداتابيز
-        $partner = Partner::create([
-            'name'        => $validated['name'],
-            'website_url' => $validated['website_url'] ?? null,
-            'sort_order'  => $validated['sort_order'] ?? 0,
-            'logo_path'   => $logoPath,
-        ]);
-
-        // 4) تجهيز اللوجو كرابط كامل
-        $partner->logo_url = $partner->logo_path
-            ? asset('storage/' . $partner->logo_path)
-            : null;
+        $partner = Partner::create($validated);
 
         return response()->json([
             'success' => true,
@@ -75,58 +75,94 @@ class PartnerController extends Controller
             'errors'  => null,
         ], 201);
     }
-    /**
- * API لتحديث شراكة موجودة
- * POST /api/admin/partners/{id}
- */
-public function update(Request $request, $id)
-{
-    $partner = Partner::find($id);
 
-    if (! $partner) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Partner not found.',
-            'data'    => null,
-            'errors'  => null,
-        ], 404);
-    }
+    /** Update partner (dashboard) */
+    public function update(Request $request, $id)
+    {
+        $partner = Partner::find($id);
 
-    // Validation
-    $validated = $request->validate([
-        'name'        => ['required', 'string', 'max:255'],
-        'website_url' => ['nullable', 'url', 'max:255'],
-        'sort_order'  => ['nullable', 'integer', 'min:0'],
-        'logo'        => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
-    ]);
-
-    // لو فيه لوجو جديد
-    if ($request->hasFile('logo')) {
-        // حذف القديم إن وُجد
-        if ($partner->logo_path && file_exists(public_path('storage/' . $partner->logo_path))) {
-            unlink(public_path('storage/' . $partner->logo_path));
+        if (! $partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found.',
+                'data'    => null,
+                'errors'  => null,
+            ], 404);
         }
 
-        $partner->logo_path = $request->file('logo')->store('partners', 'public');
+        $validated = $request->validate([
+            'name'        => ['sometimes', 'required', 'string', 'max:255'],
+            'website_url' => ['nullable', 'url', 'max:255'],
+            'sort_order'  => ['nullable', 'integer', 'min:0'],
+            'is_active'   => ['nullable', 'boolean'],
+            'logo'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg'],
+        ]);
+
+        if ($request->hasFile('logo')) {
+            if ($partner->logo_path) {
+                Storage::disk('public')->delete($partner->logo_path);
+            }
+
+            $validated['logo_path'] =
+                $request->file('logo')->store('partners', 'public');
+        }
+
+        $partner->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner updated successfully.',
+            'data'    => $partner,
+            'errors'  => null,
+        ]);
     }
 
-    // تحديث باقي البيانات
-    $partner->update([
-        'name'        => $validated['name'],
-        'website_url' => $validated['website_url'] ?? null,
-        'sort_order'  => $validated['sort_order'] ?? 0,
-    ]);
+    /** Delete partner (dashboard) */
+    public function destroy($id)
+    {
+        $partner = Partner::find($id);
 
-    $partner->logo_url = $partner->logo_path
-        ? asset('storage/' . $partner->logo_path)
-        : null;
+        if (! $partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found.',
+                'data'    => null,
+                'errors'  => null,
+            ], 404);
+        }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Partner updated successfully.',
-        'data'    => $partner,
-        'errors'  => null,
-    ]);
-}
+        if ($partner->logo_path) {
+            Storage::disk('public')->delete($partner->logo_path);
+        }
 
+        $partner->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner deleted successfully.',
+            'data'    => null,
+            'errors'  => null,
+        ]);
+    }
+
+    /* =========================================================
+     |  PUBLIC – Website
+     ========================================================= */
+
+    /** List active partners (website) */
+    public function publicIndex()
+    {
+       Partner::orderBy('sort_order')->orderBy('id')->get();
+        $partners = Partner::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Active partners fetched successfully.',
+            'data'    => ['partners' => $partners],
+            'errors'  => null,
+        ]);
+    }
 }

@@ -1,16 +1,13 @@
 <?php
 
 return [
+
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'http://localhost:8080',
-        'http://127.0.0.1:8080',
-        'https://transgetasoft.infinityfreeapp.com',
-        'http://transgetasoft.infinityfreeapp.com',
-    ],
+'allowed_origins' => ['*'],
+
 
     'allowed_origins_patterns' => [],
 
@@ -22,3 +19,4 @@ return [
 
     'supports_credentials' => false,
 ];
+

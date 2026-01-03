@@ -8,7 +8,11 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
-    /** ========== Admin: list all articles ========== */
+    /* =========================================================
+     |  ADMIN – Dashboard
+     ========================================================= */
+
+    /** List ALL articles (dashboard) */
     public function index()
     {
         $articles = Article::orderBy('sort_order')
@@ -23,7 +27,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    /** ========== Admin: show single article by ID ========== */
+    /** Show single article by ID (dashboard) */
     public function show($id)
     {
         $article = Article::find($id);
@@ -45,31 +49,44 @@ class ArticleController extends Controller
         ]);
     }
 
-    /** ========== Admin: create article ========== */
+    /** Create article (dashboard) */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title_ar'     => ['required', 'string', 'max:255'],
             'title_en'     => ['required', 'string', 'max:255'],
-            'slug'         => ['nullable', 'string', 'max:255', 'unique:articles,slug'],
+            'slug'         => ['nullable', 'string', 'max:255'],
             'summary_ar'   => ['nullable', 'string'],
             'summary_en'   => ['nullable', 'string'],
             'body_ar'      => ['nullable', 'string'],
             'body_en'      => ['nullable', 'string'],
-            'image_url'    => ['nullable', 'string', 'max:500'],
+            'image'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'sort_order'   => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
-        // لو الـ slug مش مبعوت، نولده من العنوان الإنجليزي
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title_en']);
+        /* Generate unique slug */
+        $baseSlug = Str::slug($validated['slug'] ?? $validated['title_en']);
+        $slug = $baseSlug;
+        $i = 1;
+
+        while (Article::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $i++;
         }
 
-        // Published At
-        if (! empty($validated['is_published']) && $validated['is_published']) {
+        $validated['slug'] = $slug;
+
+        /* Publish logic */
+        if (!empty($validated['is_published'])) {
             $validated['published_at'] = now();
         }
+
+        /* Image upload */
+      if ($request->hasFile('image')) {
+    $path = $request->file('image')->store('articles', 'public'); // articles/xxx.png
+    $validated['image_url'] = basename($path); // xxx.png
+}
+
 
         $article = Article::create($validated);
 
@@ -81,7 +98,7 @@ class ArticleController extends Controller
         ], 201);
     }
 
-    /** ========== Admin: update article ========== */
+    /** Update article (dashboard) */
     public function update(Request $request, $id)
     {
         $article = Article::find($id);
@@ -103,23 +120,43 @@ class ArticleController extends Controller
             'summary_en'   => ['nullable', 'string'],
             'body_ar'      => ['nullable', 'string'],
             'body_en'      => ['nullable', 'string'],
-            'image_url'    => ['nullable', 'string', 'max:500'],
+            'image'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp'],
             'sort_order'   => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
-        if (array_key_exists('slug', $validated) && empty($validated['slug'])) {
-            // لو بعتي slug فاضي، نولده من العنوان
-            $validated['slug'] = Str::slug($validated['title_en'] ?? $article->title_en);
+        /* Slug regeneration */
+        if (array_key_exists('slug', $validated)) {
+            $baseSlug = Str::slug($validated['slug'] ?: ($validated['title_en'] ?? $article->title_en));
+            $slug = $baseSlug;
+            $i = 1;
+
+            while (
+                Article::where('slug', $slug)
+                    ->where('id', '!=', $article->id)
+                    ->exists()
+            ) {
+                $slug = $baseSlug . '-' . $i++;
+            }
+
+            $validated['slug'] = $slug;
         }
 
-        // تحديث published_at بناءً على is_published
+        /* Publish logic */
         if (array_key_exists('is_published', $validated)) {
             if ($validated['is_published'] && ! $article->published_at) {
                 $validated['published_at'] = now();
-            } elseif (! $validated['is_published']) {
+            }
+
+            if (! $validated['is_published']) {
                 $validated['published_at'] = null;
             }
+        }
+
+        /* Image upload */
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('articles', 'public');
+            $validated['image_url'] = 'storage/' . $path;
         }
 
         $article->update($validated);
@@ -132,7 +169,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    /** ========== Admin: delete article ========== */
+    /** Delete article (dashboard) */
     public function destroy($id)
     {
         $article = Article::find($id);
@@ -156,7 +193,11 @@ class ArticleController extends Controller
         ]);
     }
 
-    /** ========== Public: list published articles (for website) ========== */
+    /* =========================================================
+     |  PUBLIC – Website
+     ========================================================= */
+
+    /** List published articles (website) */
     public function publicIndex()
     {
         $articles = Article::where('is_published', true)
@@ -181,7 +222,7 @@ class ArticleController extends Controller
         ]);
     }
 
-    /** ========== Public: show article by slug ========== */
+    /** Show published article by slug (website) */
     public function publicShow($slug)
     {
         $article = Article::where('slug', $slug)
@@ -204,4 +245,6 @@ class ArticleController extends Controller
             'errors'  => null,
         ]);
     }
+
+
 }

@@ -11,8 +11,25 @@ class Partner extends Model
 
     protected $fillable = [
         'name',
-        'logo_path',
         'website_url',
         'sort_order',
+        'is_active',
+        'logo_path',
     ];
+
+    /**
+     * Append logo_url automatically
+     */
+    protected $appends = ['logo_url'];
+
+
+  public function getLogoUrlAttribute()
+{
+    if (! $this->logo_path) {
+        return null;
+    }
+
+    return url('/files/partners/' . $this->logo_path);
+}
+
 }
