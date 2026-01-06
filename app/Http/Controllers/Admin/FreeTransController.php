@@ -47,7 +47,7 @@ class FreeTranslationController extends Controller
 
             Mail::raw($body, function ($message) use ($fileFullPath) {
 $message->to('info@transgateacd.com')
-        ->cc('rofaidaessa6@gmail.com')
+        ->cc('transgateac@outlook.com')
                         ->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'))
                         ->subject('New Free Translation Request');
 
