@@ -67,7 +67,7 @@ Route::get('/admin/dashboard', function () {
 
 Route::get('/test-mail', function () {
     Mail::raw('Test email from Hostinger Laravel', function ($message) {
-        $message->to('rofaidaessa6@gmail.com')
+        $message->to('info@transgateacd.com')
                 ->subject('SMTP Test - Hostinger');
     });
 
