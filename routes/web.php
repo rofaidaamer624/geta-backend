@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 
+use App\Http\Controllers\FreeTranslationController;
 Route::get('/files/articles/{filename}', function ($filename) {
     $path = storage_path('app/public/articles/' . $filename);
 
