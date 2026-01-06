@@ -66,10 +66,14 @@ Route::get('/admin/dashboard', function () {
 
 
 Route::get('/test-mail', function () {
-    Mail::raw('Test email from Hostinger Laravel', function ($message) {
-        $message->to('info@transgateacd.com')
-                ->subject('SMTP Test - Hostinger');
-    });
+    try {
+        Mail::raw('Test email from Hostinger Laravel', function ($message) {
+            $message->to('rofaidaessa6@gmail.com')
+                    ->subject('SMTP Test - Hostinger');
+        });
 
-    return 'Mail sent (if no errors).';
+        return '✅ Mail sent successfully!';
+    } catch (\Throwable $e) {
+        return response("❌ Mail failed: " . $e->getMessage(), 500);
+    }
 });
