@@ -63,17 +63,18 @@ Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->name('admin.dashboard');
 
+Route::post('/free-translation', [FreeTranslationController::class, 'store']);
 
 
-Route::get('/test-mail', function () {
-    try {
-        Mail::raw('Test email from Hostinger Laravel', function ($message) {
-            $message->to('rofaidaessa6@gmail.com')
-                    ->subject('SMTP Test - Hostinger');
-        });
+// Route::get('/test-mail', function () {
+//     try {
+//         Mail::raw('Test email from Hostinger Laravel', function ($message) {
+//             $message->to('rofaidaessa6@gmail.com')
+//                     ->subject('SMTP Test - Hostinger');
+//         });
 
-        return '✅ Mail sent successfully!';
-    } catch (\Throwable $e) {
-        return response("❌ Mail failed: " . $e->getMessage(), 500);
-    }
-});
+//         return '✅ Mail sent successfully!';
+//     } catch (\Throwable $e) {
+//         return response("❌ Mail failed: " . $e->getMessage(), 500);
+//     }
+// });
