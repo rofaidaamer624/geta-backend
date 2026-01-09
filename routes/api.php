@@ -104,13 +104,20 @@ Route::prefix('public')->group(function () {
 });
 
 /* ADMIN */
-Route::prefix('admin')->group(function () {
-    Route::get('/articles', [ArticleController::class, 'index']);
-    Route::post('/articles', [ArticleController::class, 'store']);
-    Route::get('/articles/{id}', [ArticleController::class, 'show'])->whereNumber('id');
-    Route::put('/articles/{id}', [ArticleController::class, 'update'])->whereNumber('id');
-    Route::delete('/articles/{id}', [ArticleController::class, 'destroy'])->whereNumber('id');
+
+Route::prefix('articles')->group(function () {
+    Route::get('/', [ArticleController::class, 'index']); 
+    Route::get('{id}', [ArticleController::class, 'show']); 
+    Route::post('/', [ArticleController::class, 'store']); 
+
+    // ✅ update
+    Route::post('{id}', [ArticleController::class, 'update']); 
+    Route::patch('{id}', [ArticleController::class, 'update']); 
+
+    // ✅ delete
+    Route::delete('{id}', [ArticleController::class, 'destroy']); 
 });
+
 
 /* Alias - keep old endpoint */
 Route::get('/articles', [ArticleController::class, 'publicIndex']);
