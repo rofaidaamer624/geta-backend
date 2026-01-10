@@ -11,14 +11,13 @@ use App\Http\Controllers\Admin\PartnerController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\LanguageController;
 // use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\AdminAuthController;
 
 use App\Http\Controllers\ArticleController;
-use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FreeTranslationController;
 use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\Api\UserController;
 
 /* ================================
  | AUTH
@@ -27,7 +26,8 @@ use App\Http\Controllers\Api\UserController;
 /* ================================
  | PARTNERS (Public)
  ================================= */
-Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'send']);
+
+Route::post('/contact', [ContactController::class, 'send']);
 
  Route::get('/partners', [PartnerController::class, 'publicIndex']);
 
